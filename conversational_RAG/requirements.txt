@@ -1,0 +1,10 @@
+# Core
+chromadb>=0.4.0
+
+# LLM Providers (install the one you need)
+anthropic>=0.40.0      # For Claude
+google-generativeai    # For Gemini
+
+# Embedding Providers (optional - local works without these)
+# voyageai              # For Voyage embeddings
+# openai                # For OpenAI embeddings
