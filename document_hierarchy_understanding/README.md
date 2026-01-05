@@ -1,6 +1,6 @@
 # 🏛️ Hierarchical Document RAG
 
-A production-grade Retrieval-Augmented Generation system that understands document structure. Built for large document collections with complex hierarchies (legal, technical, medical, academic).
+A production-ready Retrieval-Augmented Generation system that understands document structure. Built for large document collections with complex hierarchies (legal, technical, medical, academic).
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Anthropic](https://img.shields.io/badge/Powered%20by-Claude%20API-orange)
