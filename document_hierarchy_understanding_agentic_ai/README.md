@@ -1,6 +1,6 @@
 # 🤖 Hierarchical Document RAG with AutoGen
 
-A production-grade multi-agent RAG system that uses specialized AI agents to collaboratively answer questions about hierarchical documents.
+A production-ready multi-agent RAG system that uses specialized AI agents to collaboratively answer questions about hierarchical documents.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![AutoGen](https://img.shields.io/badge/Framework-AutoGen-purple)
