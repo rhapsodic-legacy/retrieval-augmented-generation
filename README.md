@@ -7,7 +7,10 @@ End-to-end RAG system implementations covering document ingestion, embedding, re
 ### 2) Document Hierarchy Understanding
  A production-ready Retrieval-Augmented Generation system that understands document structure. Built for large document collections with complex hierarchies (legal, technical, medical, academic).
 #### 2.5) Document Hierarchy Understanding, Agentic AI variant 
- A production-ready multi-agent RAG system that uses specialized AI agents to collaboratively answer questions about hierarchical documents.
+ A multi-agent RAG system that uses specialized AI agents to collaboratively answer questions about hierarchical documents.
 
 ### 3) Conversational RAG with Persistent Memory
- Production-ready conversational RAG with persistent memory, supporting both **Claude** and **Gemini** as LLM backends.
+ A conversational RAG with persistent memory, supporting both **Claude** and **Gemini** as LLM backends.
+
+### 4) Hybrid Search RAG
+ A comprehenzive hybrid search RAG combining **Vector Search**, **BM25**, **Knowledge Graphs**, and **ML Fusion**, while utilizing a React front end. 
