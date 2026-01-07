@@ -14,3 +14,6 @@ End-to-end RAG system implementations covering document ingestion, embedding, re
 
 ### 4) Hybrid Search RAG
  A comprehenzive hybrid search RAG combining **Vector Search**, **BM25**, **Knowledge Graphs**, and **ML Fusion**, while utilizing a React front end. 
+
+### 5) Code Repository RAG
+ Intelligent Q&A over codebases with AST-aware analysis, dependency graphs, and multi-file code tracing.
