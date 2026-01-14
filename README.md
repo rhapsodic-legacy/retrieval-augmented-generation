@@ -18,5 +18,8 @@ End-to-end RAG system implementations covering document ingestion, embedding, re
 ### 5) Code Repository RAG
  Intelligent Q&A over codebases with AST-aware analysis, dependency graphs, and multi-file code tracing.
 
-### 6) Multi-Modal RAG System
+### 6) Multi Modal RAG System
  A unified RAG system that handles text, images, PDFs, and tables together with cross-modal search.
+
+### 7) Real Time Streaming RAG
+ RAG over continuously updating data with **incremental indexing**, **time-weighted retrieval**, **deduplication**, and **freshness-aware answers**.
