@@ -1,6 +1,6 @@
 # 🔬 Self-Correcting Research Assistant
 
-An intelligent AI agent that searches the web, cross-references sources, detects contradictions, and automatically re-verifies disputed facts using the Anthropic Claude API.
+An intelligent AI agent that searches the web, cross-references sources, detects contradictions, and automatically re-verifies disputed facts using the Anthropic Claude API. 
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Anthropic](https://img.shields.io/badge/Powered%20by-Claude%20API-orange)
