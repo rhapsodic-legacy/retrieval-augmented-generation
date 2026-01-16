@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Conversational RAG with Memory - Command Line Interface
-
+ 
 Usage:
     # Interactive chat with Claude
     python main.py --provider anthropic interactive --file docs/report.md
