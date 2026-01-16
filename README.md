@@ -23,3 +23,6 @@ End-to-end RAG system implementations covering document ingestion, embedding, re
 
 ### 7) Real Time Streaming RAG
  RAG over continuously updating data with **incremental indexing**, **time-weighted retrieval**, **deduplication**, and **freshness-aware answers**.
+
+### 8) Agentic RAG with Tool Use
+ A smart assistant that **decides when to retrieve vs. use tools vs. answer directly**.
