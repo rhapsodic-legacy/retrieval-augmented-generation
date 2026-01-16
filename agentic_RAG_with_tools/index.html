@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Agentic RAG - Smart Assistant</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { font-family: 'Inter', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+        }
+        
+        /* Animated border */
+        .animated-border {
+            position: relative;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+        }
+        
+        .animated-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5, #00d2ff);
+            background-size: 200% 200%;
+            animation: gradient-shift 3s ease infinite;
+            z-index: -1;
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Glass effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Step animation */
+        @keyframes step-appear {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .step-item {
+            animation: step-appear 0.3s ease-out;
+        }
+        
+        /* Confidence bar */
+        .confidence-bar {
+            background: linear-gradient(90deg, 
+                #ef4444 0%, 
+                #f59e0b 25%, 
+                #eab308 50%, 
+                #84cc16 75%, 
+                #22c55e 100%
+            );
+        }
+        
+        /* Route badges */
+        .route-direct { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .route-retrieval { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .route-tool_use { background: linear-gradient(135deg, #10b981, #059669); }
+        .route-web_search { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .route-hybrid { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        /* Typing indicator */
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Tool icons */
+        .tool-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        const API_BASE = '';
+        
+        // API functions
+        const api = {
+            async init(config) {
+                const res = await fetch(`${API_BASE}/api/init`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config),
+                });
+                return res.json();
+            },
+            
+            async getStatus() {
+                const res = await fetch(`${API_BASE}/api/status`);
+                return res.json();
+            },
+            
+            async query(question) {
+                const res = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question }),
+                });
+                return res.json();
+            },
+            
+            async addDocument(content, source) {
+                const res = await fetch(`${API_BASE}/api/documents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, source }),
+                });
+                return res.json();
+            },
+            
+            async getTools() {
+                const res = await fetch(`${API_BASE}/api/tools`);
+                return res.json();
+            },
+        };
+        
+        // Components
+        function Header({ status }) {
+            return (
+                <header className="border-b border-white/10 py-4">
+                    <div className="container mx-auto px-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="text-3xl">🤖</div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-white">Agentic RAG</h1>
+                                    <p className="text-blue-300 text-sm">Smart Assistant with Tool Use</p>
+                                </div>
+                            </div>
+                            
+                            <div className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                                status === 'ready' 
+                                    ? 'bg-green-500/20 text-green-400' 
+                                    : 'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                                {status === 'ready' ? '● Ready' : '○ Not Initialized'}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+        }
+        
+        function ConfigPanel({ onInit, status }) {
+            const [config, setConfig] = useState({
+                llm_provider: 'gemini',
+                enable_tools: true,
+                enable_web_search: true,
+                enable_reflection: true,
+            });
+            const [loading, setLoading] = useState(false);
+            
+            const handleInit = async () => {
+                setLoading(true);
+                try {
+                    await api.init(config);
+                    onInit();
+                } catch (err) {
+                    console.error(err);
+                }
+                setLoading(false);
+            };
+            
+            return (
+                <div className="glass rounded-xl p-5">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span className="mr-2">⚙️</span> Configuration
+                    </h2>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">LLM Provider</label>
+                            <select
+                                value={config.llm_provider}
+                                onChange={e => setConfig({...config, llm_provider: e.target.value})}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="gemini">Google Gemini</option>
+                                <option value="anthropic">Anthropic Claude</option>
+                                <option value="openai">OpenAI GPT</option>
+                            </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {[
+                                { key: 'enable_tools', label: 'Enable Tools', icon: '🔧' },
+                                { key: 'enable_web_search', label: 'Web Search Fallback', icon: '🌐' },
+                                { key: 'enable_reflection', label: 'Self-Reflection', icon: '🔄' },
+                            ].map(({ key, label, icon }) => (
+                                <label key={key} className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={config[key]}
+                                        onChange={e => setConfig({...config, [key]: e.target.checked})}
+                                        className="w-4 h-4 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
+                                    />
+                                    <span className="text-gray-300 text-sm">{icon} {label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        
+                        <button
+                            onClick={handleInit}
+                            disabled={loading || status === 'ready'}
+                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-all"
+                        >
+                            {loading ? 'Initializing...' : status === 'ready' ? '✓ Initialized' : 'Initialize'}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        function ToolsPanel({ tools }) {
+            const toolIcons = {
+                calculator: { icon: '🧮', color: 'bg-purple-500/20' },
+                web_search: { icon: '🌐', color: 'bg-orange-500/20' },
+                code_executor: { icon: '💻', color: 'bg-green-500/20' },
+                datetime: { icon: '🕐', color: 'bg-blue-500/20' },
+            };
+            
+            return (
+                <div className="glass rounded-xl p-5">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span className="mr-2">🔧</span> Available Tools
+                    </h2>
+                    
+                    <div className="space-y-2">
+                        {tools.map(tool => {
+                            const info = toolIcons[tool.name] || { icon: '🔨', color: 'bg-gray-500/20' };
+                            return (
+                                <div key={tool.name} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-white/5">
+                                    <div className={`tool-icon ${info.color}`}>
+                                        {info.icon}
+                                    </div>
+                                    <div>
+                                        <div className="text-white font-medium text-sm">{tool.name}</div>
+                                        <div className="text-gray-400 text-xs">{tool.description.slice(0, 60)}...</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+        
+        function KnowledgePanel({ onAdd, docCount }) {
+            const [content, setContent] = useState('');
+            const [source, setSource] = useState('');
+            
+            const handleAdd = async () => {
+                if (!content || !source) return;
+                await onAdd(content, source);
+                setContent('');
+                setSource('');
+            };
+            
+            return (
+                <div className="glass rounded-xl p-5">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span className="mr-2">📚</span> Knowledge Base
+                        <span className="ml-auto text-sm font-normal text-gray-400">{docCount} docs</span>
+                    </h2>
+                    
+                    <div className="space-y-3">
+                        <input
+                            type="text"
+                            placeholder="Source name (e.g., policy.pdf)"
+                            value={source}
+                            onChange={e => setSource(e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <textarea
+                            placeholder="Paste document content here..."
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            rows={3}
+                            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                        <button
+                            onClick={handleAdd}
+                            disabled={!content || !source}
+                            className="w-full bg-blue-500/20 text-blue-400 py-2 rounded-lg font-medium hover:bg-blue-500/30 disabled:opacity-50 transition-all text-sm"
+                        >
+                            Add Document
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        function QueryPanel({ status, onQuery }) {
+            const [query, setQuery] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            
+            const exampleQueries = [
+                "What is 125 * 48?",
+                "What's the current date?",
+                "Search for recent AI news",
+                "Write a Python function to reverse a string",
+            ];
+            
+            const handleQuery = async () => {
+                if (!query || status !== 'ready') return;
+                
+                setLoading(true);
+                setResult(null);
+                
+                try {
+                    const res = await api.query(query);
+                    setResult(res);
+                    if (onQuery) onQuery(res);
+                } catch (err) {
+                    console.error(err);
+                }
+                
+                setLoading(false);
+            };
+            
+            return (
+                <div className="space-y-4">
+                    {/* Query input */}
+                    <div className="animated-border p-5">
+                        <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                            <span className="mr-2">💬</span> Ask the Agent
+                        </h2>
+                        
+                        <div className="flex space-x-3">
+                            <input
+                                type="text"
+                                placeholder="Ask anything... calculations, questions, searches..."
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                onKeyPress={e => e.key === 'Enter' && handleQuery()}
+                                className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <button
+                                onClick={handleQuery}
+                                disabled={loading || status !== 'ready'}
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-all"
+                            >
+                                {loading ? (
+                                    <div className="flex space-x-1">
+                                        <div className="typing-dot"></div>
+                                        <div className="typing-dot"></div>
+                                        <div className="typing-dot"></div>
+                                    </div>
+                                ) : 'Ask'}
+                            </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {exampleQueries.map(q => (
+                                <button
+                                    key={q}
+                                    onClick={() => setQuery(q)}
+                                    className="text-xs bg-white/10 text-gray-300 px-3 py-1 rounded-full hover:bg-white/20 transition"
+                                >
+                                    {q}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Result */}
+                    {result && <ResultDisplay result={result} />}
+                </div>
+            );
+        }
+        
+        function ResultDisplay({ result }) {
+            const routeColors = {
+                direct: 'route-direct',
+                retrieval: 'route-retrieval',
+                tool_use: 'route-tool_use',
+                web_search: 'route-web_search',
+                hybrid: 'route-hybrid',
+            };
+            
+            return (
+                <div className="glass rounded-xl p-5 space-y-4">
+                    {/* Header with route and confidence */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <span className={`${routeColors[result.route] || 'bg-gray-500'} px-3 py-1 rounded-full text-white text-sm font-medium`}>
+                                {result.route.replace('_', ' ').toUpperCase()}
+                            </span>
+                            <span className="text-gray-400 text-sm">
+                                {result.route_reasoning}
+                            </span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                            <span className="text-gray-400 text-sm">Confidence:</span>
+                            <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full confidence-bar transition-all duration-500"
+                                    style={{ width: `${result.confidence * 100}%` }}
+                                />
+                            </div>
+                            <span className="text-white font-medium text-sm">
+                                {(result.confidence * 100).toFixed(0)}%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {/* Steps */}
+                    {result.steps.length > 0 && (
+                        <div className="bg-white/5 rounded-lg p-4">
+                            <h3 className="text-sm font-medium text-gray-400 mb-3">Reasoning Steps</h3>
+                            <div className="space-y-2">
+                                {result.steps.map((step, i) => (
+                                    <div key={i} className="step-item flex items-start space-x-3">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                            step.type === 'routing' ? 'bg-purple-500/30 text-purple-300' :
+                                            step.type === 'retrieval' ? 'bg-blue-500/30 text-blue-300' :
+                                            step.type === 'tool' ? 'bg-green-500/30 text-green-300' :
+                                            'bg-orange-500/30 text-orange-300'
+                                        }`}>
+                                            {i + 1}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="text-white text-sm">{step.description}</div>
+                                            {step.result && (
+                                                <div className="text-gray-400 text-xs mt-1">{step.result}</div>
+                                            )}
+                                        </div>
+                                        <div className="text-gray-500 text-xs">{step.duration_ms}ms</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Tool Results */}
+                    {result.tool_results.length > 0 && (
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                            <h3 className="text-sm font-medium text-green-400 mb-2">Tool Results</h3>
+                            {result.tool_results.map((tr, i) => (
+                                <div key={i} className="text-white text-sm">
+                                    <span className="text-green-300 font-medium">{tr.tool}:</span>{' '}
+                                    {tr.output}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {/* Answer */}
+                    <div className="border-t border-white/10 pt-4">
+                        <h3 className="text-sm font-medium text-gray-400 mb-2">Answer</h3>
+                        <div className="text-white whitespace-pre-wrap leading-relaxed">
+                            {result.answer}
+                        </div>
+                    </div>
+                    
+                    {/* Citations */}
+                    {result.citations.length > 0 && (
+                        <div className="border-t border-white/10 pt-4">
+                            <h3 className="text-sm font-medium text-gray-400 mb-2">Sources</h3>
+                            <div className="space-y-2">
+                                {result.citations.map((cite, i) => (
+                                    <div key={i} className="flex items-center space-x-3 text-sm">
+                                        <span className="text-blue-400">[{i + 1}]</span>
+                                        <span className="text-white">{cite.name}</span>
+                                        <span className="text-gray-500">({cite.type})</span>
+                                        <span className="text-gray-400">{(cite.confidence * 100).toFixed(0)}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Footer */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-white/10">
+                        <span>Model: {result.model}</span>
+                        <span>Total time: {result.total_time_ms}ms</span>
+                    </div>
+                </div>
+            );
+        }
+        
+        function App() {
+            const [status, setStatus] = useState('not_initialized');
+            const [tools, setTools] = useState([]);
+            const [docCount, setDocCount] = useState(0);
+            
+            const checkStatus = async () => {
+                try {
+                    const data = await api.getStatus();
+                    setStatus(data.status);
+                    if (data.stats) {
+                        setDocCount(data.stats.knowledge_base?.count || 0);
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            
+            const loadTools = async () => {
+                try {
+                    const data = await api.getTools();
+                    setTools(data.tools || []);
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            
+            const handleInit = () => {
+                checkStatus();
+                loadTools();
+            };
+            
+            const handleAddDoc = async (content, source) => {
+                await api.addDocument(content, source);
+                checkStatus();
+            };
+            
+            useEffect(() => {
+                checkStatus();
+            }, []);
+            
+            return (
+                <div className="min-h-screen">
+                    <Header status={status} />
+                    
+                    <main className="container mx-auto px-4 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            {/* Sidebar */}
+                            <div className="space-y-6">
+                                <ConfigPanel onInit={handleInit} status={status} />
+                                {tools.length > 0 && <ToolsPanel tools={tools} />}
+                                <KnowledgePanel onAdd={handleAddDoc} docCount={docCount} />
+                            </div>
+                            
+                            {/* Main content */}
+                            <div className="lg:col-span-3">
+                                <QueryPanel status={status} onQuery={() => {}} />
+                            </div>
+                        </div>
+                    </main>
+                    
+                    <footer className="border-t border-white/10 py-6 mt-8">
+                        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+                            🤖 Agentic RAG • Intelligent Routing • Self-Reflective Retrieval • Multi-Tool Support
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
