@@ -2,7 +2,7 @@
 Agentic RAG - Smart Assistant with Tool Use
 
 Main orchestrator that:
-- Routes queries to appropriate handlers
+- Routes queries to appropriate handlers 
 - Uses tools when needed
 - Retrieves from knowledge base with self-reflection
 - Falls back to web search when needed
