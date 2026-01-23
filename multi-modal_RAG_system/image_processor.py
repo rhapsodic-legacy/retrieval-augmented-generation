@@ -1,6 +1,6 @@
 """
 Image Processor
-
+ 
 Processes images using vision models to:
 - Generate descriptions
 - Classify image types (photo, chart, diagram, etc.)
