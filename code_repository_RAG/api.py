@@ -1,7 +1,7 @@
 """
 FastAPI Backend for Code RAG
 
-Provides REST API for:
+Provides REST API for: 
 - Indexing codebases
 - Code search and queries
 - Symbol lookup
